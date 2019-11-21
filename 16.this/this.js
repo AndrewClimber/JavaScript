@@ -73,7 +73,7 @@ const prod4 = {
   getPrice2
 };
 
-console.log(getPrice.call(prod4));
+console.log(getPrice.call(prod4).price);
 
 console.log(getPrice1.call(prod4, "%"));
 console.log(getPrice1.apply(prod4, ["*"]));
