@@ -47,9 +47,20 @@ const lena = {
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 const array = [1, 2, 3, 4, 5];
+// Первый способ
+function multBy(arr, n) {
+  return arr.map(function(currVal) {
+    return currVal * n;
+  });
+}
 
-Array.prototype.multBy = function(n) {
-  console.log("multBy ", this);
+console.log("Variant 1: ", multBy(array, 5));
+
+// Второй вариант . С прототипами
+Array.prototype.multProtoBy = function(n) {
+  return this.map(function(currVal) {
+    return currVal * n;
+  });
 };
 
-array.multBy(3);
+console.log("Prototype: ", array.multProtoBy(11));
