@@ -68,7 +68,7 @@ console.log("foo1.cnt= ", data.cnt);
 */
 
 /*
-# Default binding
+# 1. Default binding
 */
 
 function fu1() {
@@ -100,7 +100,7 @@ var a2 = 3;
 })();
 
 /*
-# Implicit binding. Скрытое связывание.
+# 2. Implicit binding. Скрытое связывание.
 # Это, когда объект связывается с функцией
 */
 
@@ -118,3 +118,228 @@ var obj = {
 ! this указывает на объект, которые находится слева от точки , т.е. это obj
 */
 obj.fu3(); //Implicit binding:  { a3: 2, fu3: [Function: fu3] } 2
+/*
+! fu3 - определена вне объекта
+! свойству fu3 объекта obj присвоили внешнюю ф-ю fu3
+! и вызвали fu3 сохраненную в obj
+*/
+/*
+! При вложенности объектов один в другой, берется контекст последнего объекта.
+*/
+var obj3 = {
+  a3: 42,
+  fu3: fu3
+};
+
+var obj2 = {
+  a3: 2,
+  obj3: obj3
+};
+
+//obj2.obj3.fu3(); // Implicit binding:  { a3: 42, fu3: [Function: fu3] } 42
+
+/*
+! Потеря связывания с объектом
+*/
+/*
+https://youtu.be/3btM1eujf9s?t=2114
+*/
+function fu5() {
+  console.log("fu5: ", this.a5);
+}
+
+// тут fu5 связали с объектом obj5
+var obj5 = {
+  a5: 2,
+  fu5: fu5
+};
+
+// а тут с помощью bar отвязалс от объекта.
+var bar = obj5.fu5; // создаем псевдоним на функцию
+var a5 = "opss, global"; // a5 - глобальная переменная
+
+// ! ф-я bar вызвалась с default binding. и идет ссылка не на obj5, а на глобальный объект
+//bar(); // в браузере выведет : fu5:  opss, global
+
+// тоже потеря связывания с объектом. Почему ?
+//setTimeout(obj5.fu5, 100); // в браузере выведет : fu5:  opss, global
+/*
+* заглянем внутрь функции setTimeout
+! function setTimeout(fn, delay) // fn - наша функция. delay - задержка.
+   !  задержка в миллисекундах delay
+   !  fn(); - вызов нашей функции. Это нашей функции call-site - и он default binding - ссылается на глобальный объект
+*/
+
+/*
+# 3. Explicit binding - явное связывание.
+# при помощи call или apply
+*/
+fu5.call(obj5); // fu5:  2
+fu5.apply(obj5); // fu5:  2
+
+function fu6(s) {
+  console.log(s, this.a6);
+}
+
+a6 = "Global";
+
+var obj6 = {
+  a6: 2,
+  fu6: fu6
+};
+
+fu6.call(obj6, "call"); // call:  2
+fu6.apply(obj6, ["applay"]); // apply:  2
+
+/*
+# Трюк при Explicit binding
+# его еще называют Hard binding
+*/
+
+function fu7(s) {
+  console.log(s, this.a7);
+}
+
+a7 = "GLOBAL";
+
+var obj7 = {
+  a7: 2
+};
+
+var bar1 = function() {
+  fu7.call(obj7, "Hard: ");
+};
+
+//вызов идет через default binding
+// контекст меняется для ф-и bar1, А не для ф-и fu7
+//bar1(); // Hard:  2
+//setTimeout(bar1, 100); // Hard:  2
+
+/*
+# Hard binding. Ещё пример.
+*/
+function fu8(someting) {
+  return this.a7 + someting;
+}
+
+var obj7 = {
+  a7: 22
+};
+
+var bar7 = function() {
+  return fu8.apply(obj7, arguments);
+};
+
+var bb = bar7(3);
+console.log(bb);
+
+/*
+# Hard binding с хелпером
+*/
+function bind1(fn, obj) {
+  // Хелпер
+  return function() {
+    // Функция создает замыкание
+    return fn.apply(obj, arguments);
+  };
+}
+
+var bbb = bind1(fu8, obj7);
+
+console.log(bbb(5));
+/*
+
+# Function.prototype.bind
+*/
+function fuu(someting) {
+  return this.f + someting;
+}
+
+var objj = {
+  f: 2
+};
+
+var brr = fuu.bind(objj);
+var d = brr(12);
+
+console.log(d);
+
+/*
+# 4. New binding
+*/
+
+/*
+! Что такое конструктор в JS ?
+! Конструктор в JS - это обычная функция.
+! Которая должна быть вызвана с оператором new
+! перед ней. Это называется вызов конструктора.
+! После вызова конструктора автоматически происходит следующее:
+! 1. на лету создается новый объект
+! 2. Прототип функции конструктора становится прототипом нового объекта
+! 3. Этот-же элемент становится 
+# this 
+! для вызова данного конструктора
+! 4. Функция вызванная с оператором new автоматически вернет
+!вновь созданный объект 
+*/
+
+function fuuu(aaa) {
+  this.bbb = aaa;
+}
+
+var fee = new fuuu(2);
+
+//console.log(fee.bbb);
+
+/*
+Несколько правил в одном Call site
+1. Default binding - Самый низкий приоритет
+2. У Explicit binding (call, apply) приоритет выше чем у implicit obj.foo()
+3. new binding - выше чем implicit obj.foo()
+4. Explicit binding (call, apply) и new binding не могут существовать вместе.
+ */
+
+console.log("----------------------------------------------");
+function someFunction() {
+  console.log(this.attrib);
+}
+
+var someObj1 = {
+  attrib: 2,
+  someFunction: someFunction
+};
+
+var someObj2 = {
+  attrib: 3,
+  someFunction: someFunction
+};
+
+someObj1.someFunction(); // 2
+someObj2.someFunction(); // 3
+
+someObj1.someFunction.call(someObj2); // 3
+someObj2.someFunction.call(someObj1); // 2
+
+/*
+! lexical this в стрелочных функциях.
+*/
+console.log("----------------------------------------------");
+
+function testFunction() {
+  return () => {
+    console.log(this.attr);
+  };
+}
+
+var testObj1 = {
+  attr: 2
+};
+
+var testObj2 = {
+  attr: 3
+};
+
+var testVar = testFunction.call(testObj1);
+// принудительно задали контекст из testObj2, но стрелочная функция
+// берет контекст только из родительской функции.
+testVar(testObj2); // 2 , а не 3!
